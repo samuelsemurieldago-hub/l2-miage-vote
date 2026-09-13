@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { KeyRound, Download, RefreshCw, CircleCheck, CircleX, AlertTriangle, AlertCircle } from 'lucide-react';
 import { buildCodesCSV, generateAndStoreCodes, listCodes } from '../../lib/voterCodes';
+import { subscribeElectionConfig } from '../../lib/election';
 import { getErrorMessage } from '../../lib/errors';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import type { VoterCode } from '../../types';
 
-const TOTAL_CODES = 88;
-
 export default function AdminCodes() {
   const [codes, setCodes] = useState<VoterCode[] | null>(null);
+  // Number of codes to generate always follows "Nombre d'électeurs" from
+  // Paramètres — changing it there changes how many codes get generated here.
+  const [totalVoters, setTotalVoters] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -21,15 +23,18 @@ export default function AdminCodes() {
 
   useEffect(() => {
     refresh();
+    const unsubscribe = subscribeElectionConfig((config) => setTotalVoters(config.totalVoters));
+    return unsubscribe;
   }, []);
 
   async function handleGenerate() {
+    if (!totalVoters) return;
     setGenerating(true);
     setError(null);
     try {
-      await generateAndStoreCodes(TOTAL_CODES);
+      await generateAndStoreCodes(totalVoters);
       await refresh();
-      setSuccessMsg(`${TOTAL_CODES} codes générés avec succès.`);
+      setSuccessMsg(`${totalVoters} codes générés avec succès.`);
       setConfirmOpen(false);
       setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err) {
@@ -62,7 +67,10 @@ export default function AdminCodes() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Gestion des codes</h1>
-          <p className="mt-1 text-sm text-slate-500">Générez et exportez les {TOTAL_CODES} codes de vote uniques.</p>
+          <p className="mt-1 text-sm text-slate-500">
+            Générez et exportez les {totalVoters ?? '…'} codes de vote uniques (un par électeur — réglable dans{' '}
+            <strong>Paramètres → Nombre d'électeurs</strong>).
+          </p>
         </div>
         <div className="flex gap-2">
           <button
@@ -75,10 +83,11 @@ export default function AdminCodes() {
           </button>
           <button
             onClick={() => setConfirmOpen(true)}
-            className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+            disabled={!totalVoters}
+            className="flex items-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:opacity-50"
           >
             <RefreshCw size={16} />
-            Générer les {TOTAL_CODES} codes
+            Générer les {totalVoters ?? '…'} codes
           </button>
         </div>
       </div>
@@ -161,10 +170,10 @@ export default function AdminCodes() {
 
       <ConfirmDialog
         open={confirmOpen}
-        title={`Générer ${TOTAL_CODES} codes ?`}
+        title={`Générer ${totalVoters ?? ''} codes ?`}
         description={
           <div className="flex flex-col gap-2">
-            <p>Cette action va générer les {TOTAL_CODES} codes de l'élection.</p>
+            <p>Cette action va générer les {totalVoters} codes de l'élection.</p>
             {codes && codes.length > 0 && (
               <p className="flex items-center gap-1.5 text-amber-600">
                 <AlertTriangle size={14} />

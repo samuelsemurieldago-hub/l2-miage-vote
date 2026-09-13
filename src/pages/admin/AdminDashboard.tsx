@@ -48,7 +48,11 @@ export default function AdminDashboard() {
 
       <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
         <QuickLink to="/admin/candidates" title="Gérer les candidats" description="Ajouter, modifier ou supprimer des candidats" />
-        <QuickLink to="/admin/codes" title="Codes de vote" description="Générer et exporter les 88 codes" />
+        <QuickLink
+          to="/admin/codes"
+          title="Codes de vote"
+          description={`Générer et exporter les ${stats ? stats.totalVoters : ''} codes`}
+        />
         <QuickLink to="/admin/election" title="État de l'élection" description="Ouvrir ou fermer le vote" />
         <QuickLink to="/admin/results" title="Résultats" description="Consulter les résultats en direct" />
       </div>
