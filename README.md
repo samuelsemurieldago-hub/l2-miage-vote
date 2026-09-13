@@ -79,7 +79,7 @@ Relancez `npm run dev` après avoir renseigné le fichier `.env`.
 
 Deux façons de définir le logo :
 
-- Déposez un fichier `logo.png` dans `public/` (repris automatiquement par défaut).
+- Déposez un fichier `logo.jpg` dans `public/` (repris automatiquement par défaut — c'est déjà le cas, avec le logo de l'association des étudiants de MIAGE-GI).
 - Ou envoyez une image depuis **Paramètres > Identité visuelle** dans le dashboard admin (stockée dans le bucket Supabase Storage `branding`).
 
 ## Comptes sous-admin (accès restreint)

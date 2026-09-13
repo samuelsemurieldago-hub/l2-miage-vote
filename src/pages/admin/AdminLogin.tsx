@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { LogIn, GraduationCap, AlertCircle } from 'lucide-react';
+import { LogIn, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { LogoPlaceholder } from '../../components/LogoPlaceholder';
 
 function friendlyError(message: string): string {
   const lower = message.toLowerCase();
@@ -41,9 +42,7 @@ export default function AdminLogin() {
     <div className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
       <div className="w-full max-w-sm animate-fade-in rounded-2xl bg-white p-8 shadow-xl">
         <div className="flex flex-col items-center text-center">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-900 text-primary-400">
-            <GraduationCap size={28} />
-          </div>
+          <LogoPlaceholder size={56} />
           <h1 className="mt-4 text-xl font-bold text-slate-900">Espace administrateur</h1>
           <p className="mt-1 text-sm text-slate-500">L2 MIAGE — Élection des représentants</p>
         </div>

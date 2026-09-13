@@ -109,7 +109,7 @@ export default function AdminSettings() {
             />
           </div>
           <p className="mt-2 text-xs text-slate-400">
-            Vous pouvez aussi placer un fichier <code>logo.png</code> dans le dossier <code>public/</code> du projet.
+            Vous pouvez aussi placer un fichier <code>logo.jpg</code> dans le dossier <code>public/</code> du projet.
           </p>
         </div>
 

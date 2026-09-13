@@ -8,12 +8,12 @@ interface LogoPlaceholderProps {
 }
 
 /**
- * Renders the configured logo (from /public/logo.png by default, or an
+ * Renders the configured logo (from /public/logo.jpg by default, or an
  * uploaded logoUrl) with a graceful fallback placeholder if none is set.
  */
 export function LogoPlaceholder({ logoUrl, size = 72, className = '' }: LogoPlaceholderProps) {
   const [failed, setFailed] = useState(false);
-  const src = logoUrl ?? '/logo.png';
+  const src = logoUrl ?? '/logo.jpg';
 
   if (failed) {
     return (

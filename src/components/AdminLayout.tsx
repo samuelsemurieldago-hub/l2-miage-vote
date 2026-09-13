@@ -10,9 +10,9 @@ import {
   LogOut,
   Menu,
   X,
-  GraduationCap,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { LogoPlaceholder } from './LogoPlaceholder';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
@@ -60,7 +60,7 @@ export function AdminLayout() {
       {/* Mobile top bar */}
       <div className="flex items-center justify-between bg-slate-900 px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2 text-white">
-          <GraduationCap size={22} className="text-primary-400" />
+          <LogoPlaceholder size={28} />
           <span className="font-bold">L2 MIAGE</span>
         </div>
         <button onClick={() => setMobileOpen((v) => !v)} className="rounded-lg p-2 text-white hover:bg-slate-800">
@@ -76,7 +76,7 @@ export function AdminLayout() {
           }`}
         >
           <div className="mb-8 hidden items-center gap-2 px-2 text-white lg:flex">
-            <GraduationCap size={26} className="text-primary-400" />
+            <LogoPlaceholder size={32} />
             <div>
               <p className="font-bold leading-tight">L2 MIAGE</p>
               <p className="text-xs text-slate-400">Espace administrateur</p>
