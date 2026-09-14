@@ -75,78 +75,27 @@
     }
   }
 
-  .animate-winner-photo {
-    animation: winnerPhoto 0.5s ease-out 0.3s both;
+  /* Results list: each ribbon row slides in from the left with a stagger,
+     so the ranking reveals itself top to bottom rather than popping at once. */
+  .animate-result-row {
+    animation: resultRow 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  @keyframes winnerPhoto {
+  @keyframes resultRow {
     from {
       opacity: 0;
-      transform: scale(0.85);
+      transform: translateX(-16px);
     }
     to {
       opacity: 1;
-      transform: scale(1);
-    }
-  }
-
-  /* Slow, subtle sheen sweeping across the winner card — a hint of
-     celebration without being distracting or looping too fast. */
-  .animate-winner-sheen {
-    animation: winnerSheen 3.5s ease-in-out 0.6s infinite;
-  }
-
-  @keyframes winnerSheen {
-    0%,
-    100% {
-      transform: translateX(-120%);
-    }
-    50% {
-      transform: translateX(120%);
-    }
-  }
-
-  /* Podium: each step "rises" from its base, tallest (1st place) landing
-     last so the eye follows the ranking as it builds. The photo above each
-     step pops in right after its own step settles. */
-  .animate-podium-step {
-    animation: podiumStep 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-    transform-origin: bottom;
-  }
-
-  @keyframes podiumStep {
-    from {
-      opacity: 0;
-      transform: scaleY(0.3) translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: scaleY(1) translateY(0);
-    }
-  }
-
-  .animate-podium-photo {
-    animation: podiumPhoto 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  }
-
-  @keyframes podiumPhoto {
-    from {
-      opacity: 0;
-      transform: translateY(12px) scale(0.7);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
+      transform: translateX(0);
     }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .animate-winner-card,
     .animate-winner-trophy,
-    .animate-winner-photo,
-    .animate-winner-sheen,
-    .animate-podium-step,
-    .animate-podium-photo,
+    .animate-result-row,
     .animate-fade-in {
       animation: none;
     }

@@ -8,29 +8,23 @@ import { subscribeElectionConfig, isElectionCurrentlyOpen } from '../lib/electio
 import { getElectionPodium, type PodiumEntry } from '../lib/podium';
 import type { ElectionConfig } from '../types';
 
-const RANK_STYLE: Record<number, { pedestal: string; gradient: string; ring: string; photo: string; order: string }> = {
-  1: {
-    pedestal: 'h-24 sm:h-36',
-    gradient: 'from-amber-400 to-amber-500',
-    ring: 'ring-amber-300',
-    photo: 'h-20 w-20 sm:h-28 sm:w-28',
-    order: 'order-2',
-  },
-  2: {
-    pedestal: 'h-16 sm:h-24',
-    gradient: 'from-slate-300 to-slate-400',
-    ring: 'ring-slate-300',
-    photo: 'h-16 w-16 sm:h-24 sm:w-24',
-    order: 'order-1',
-  },
-  3: {
-    pedestal: 'h-11 sm:h-16',
-    gradient: 'from-orange-300 to-orange-400',
-    ring: 'ring-orange-300',
-    photo: 'h-14 w-14 sm:h-20 sm:w-20',
-    order: 'order-3',
-  },
-};
+function rankLabel(rank: number): string {
+  if (rank === 1) return 'Délégué général';
+  if (rank === 2) return 'Sous-délégué';
+  return "Tu n'as pas démérité";
+}
+
+function rankGradient(rank: number): string {
+  if (rank === 1) return 'from-blue-700 via-blue-600 to-blue-500';
+  if (rank === 2) return 'from-slate-500 via-slate-400 to-slate-300';
+  return 'from-stone-500 via-stone-400 to-stone-300';
+}
+
+function rankBadgeGradient(rank: number): string {
+  if (rank === 1) return 'from-blue-900 to-blue-700';
+  if (rank === 2) return 'from-slate-700 to-slate-500';
+  return 'from-stone-700 to-stone-500';
+}
 
 export default function Home() {
   const [config, setConfig] = useState<ElectionConfig | null>(null);
@@ -76,53 +70,54 @@ export default function Home() {
       </div>
 
       {podium && podium.length > 0 && (
-        <div className="animate-winner-card relative mt-8 w-full max-w-2xl overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 via-yellow-50 to-amber-50 p-6 shadow-sm shadow-amber-200/50 sm:p-10">
-          <div
-            aria-hidden="true"
-            className="animate-winner-sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-          />
-
-          <div className="relative flex flex-col items-center text-center">
-            <div className="animate-winner-trophy flex h-12 w-12 items-center justify-center rounded-full bg-amber-400 text-white shadow-md shadow-amber-400/40">
-              <Trophy size={22} strokeWidth={2.25} />
+        <div className="w-full max-w-xl">
+          <div className="animate-winner-card flex flex-col items-center text-center">
+            <div className="animate-winner-trophy flex h-11 w-11 items-center justify-center rounded-full bg-blue-600 text-white shadow-md shadow-blue-600/30">
+              <Trophy size={20} strokeWidth={2.25} />
             </div>
-            <p className="mt-3 text-xs font-bold uppercase tracking-widest text-amber-700">Élection terminée</p>
-            <h2 className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">Podium final</h2>
+            <p className="mt-3 text-xs font-bold uppercase tracking-widest text-blue-700">Élection terminée</p>
+            <h2 className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">Résultats</h2>
           </div>
 
-          <div className="relative mt-10 flex flex-wrap items-end justify-center gap-2 sm:gap-6">
-            {podium.map((p) => {
-              const style = RANK_STYLE[p.rank] ?? RANK_STYLE[3];
-              const stepDelay = (3 - p.rank) * 0.15;
-              return (
-                <div key={p.candidateId} className={`flex w-20 flex-col items-center sm:w-36 ${style.order}`}>
-                  <div
-                    className={`animate-podium-photo overflow-hidden rounded-full bg-white shadow-md ring-4 ring-offset-2 ring-offset-amber-50 ${style.ring} ${style.photo}`}
-                    style={{ animationDelay: `${stepDelay + 0.2}s` }}
-                  >
-                    {p.photoUrl ? (
-                      <img src={p.photoUrl} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center text-slate-300">
-                        <User size={28} />
-                      </div>
-                    )}
-                  </div>
-
-                  <p className="mt-3 text-center text-sm font-bold leading-tight text-slate-900 sm:text-base">
-                    {p.firstName} {p.lastName}
-                  </p>
-                  <p className="mt-1 text-lg font-extrabold text-amber-600 sm:text-xl">{p.percentage.toFixed(1)}%</p>
-
-                  <div
-                    className={`animate-podium-step mt-3 flex w-full items-start justify-center rounded-t-lg bg-gradient-to-b pt-2 text-lg font-extrabold text-white shadow-inner sm:text-xl ${style.gradient} ${style.pedestal}`}
-                    style={{ animationDelay: `${stepDelay}s` }}
-                  >
-                    {p.rank}
-                  </div>
+          <div className="mt-6 flex flex-col gap-3">
+            {podium.map((p, i) => (
+              <div
+                key={p.candidateId}
+                className={`animate-result-row relative flex items-center overflow-hidden rounded-2xl bg-gradient-to-r shadow-md ${rankGradient(p.rank)}`}
+                style={{ animationDelay: `${i * 0.12}s` }}
+              >
+                <div
+                  className={`flex w-14 shrink-0 items-center justify-center self-stretch bg-gradient-to-b text-3xl font-black text-white/90 sm:w-20 sm:text-4xl ${rankBadgeGradient(p.rank)}`}
+                >
+                  {p.rank}
                 </div>
-              );
-            })}
+
+                <div className="min-w-0 flex-1 px-4 py-3 sm:px-6 sm:py-4">
+                  <p className="truncate text-lg font-extrabold uppercase leading-tight text-white sm:text-xl">
+                    {p.lastName}
+                  </p>
+                  <p className="truncate text-sm font-semibold leading-tight text-white/90 sm:text-base">
+                    {p.firstName}
+                  </p>
+                  <p className="mt-1 text-2xl font-black leading-none text-white sm:text-3xl">
+                    {p.percentage.toFixed(1)}%
+                  </p>
+                  <p className="mt-1 text-[11px] font-bold uppercase tracking-widest text-white/80 sm:text-xs">
+                    {rankLabel(p.rank)}
+                  </p>
+                </div>
+
+                <div className="mr-3 h-16 w-16 shrink-0 overflow-hidden rounded-full border-4 border-white shadow-lg sm:mr-5 sm:h-24 sm:w-24">
+                  {p.photoUrl ? (
+                    <img src={p.photoUrl} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-white text-slate-300">
+                      <User size={28} />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

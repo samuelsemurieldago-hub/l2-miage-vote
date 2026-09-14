@@ -391,10 +391,10 @@ $$;
 revoke all on function public.set_election_status(text) from public;
 grant execute on function public.set_election_status(text) to authenticated;
 
--- Public podium — callable by anyone (students included), but only ever
+-- Public results — callable by anyone (students included), but only ever
 -- reveals anything once voting is genuinely over (status closed, or the
--- configured end_date has passed). Returns the top 3 candidates by votes
--- with a `rank` (1/2/3, dense — ties share a rank) and a rounded
+-- configured end_date has passed). Returns EVERY active candidate ranked by
+-- votes with a `rank` (dense — ties share a rank) and a rounded
 -- `percentage` — NEVER the vote counts or the total, keeping the same
 -- "no raw numbers for students" rule as the rest of the app.
 drop function if exists public.get_election_winners();
@@ -450,7 +450,6 @@ begin
       ) vc on vc.candidate_id = c.id
       where c.active = true
     ) ranked
-    where ranked.rank <= 3
     order by ranked.rank asc, ranked.first_name asc;
 end;
 $$;
