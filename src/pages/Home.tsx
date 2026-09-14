@@ -51,17 +51,33 @@ export default function Home() {
         </div>
 
         {winners && winners.length > 0 && (
-          <div className="mt-8 rounded-2xl border border-amber-200 bg-amber-50 p-6 animate-fade-in">
-            <div className="flex items-center justify-center gap-2 text-amber-700">
-              <Trophy size={20} />
-              <p className="text-sm font-bold uppercase tracking-wide">
+          <div className="animate-winner-card relative mt-8 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 via-yellow-50 to-amber-50 p-6 shadow-sm shadow-amber-200/50 sm:p-8">
+            {/* Subtle celebratory sheen sweeping across the card */}
+            <div
+              aria-hidden="true"
+              className="animate-winner-sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+            />
+
+            <div className="relative flex flex-col items-center">
+              <div className="animate-winner-trophy flex h-12 w-12 items-center justify-center rounded-full bg-amber-400 text-white shadow-md shadow-amber-400/40">
+                <Trophy size={22} strokeWidth={2.25} />
+              </div>
+              <p className="mt-3 text-xs font-bold uppercase tracking-widest text-amber-700">Élection terminée</p>
+              <h2 className="mt-1 text-lg font-extrabold text-slate-900">
                 {winners.length > 1 ? 'Vainqueurs ex æquo' : 'Vainqueur'}
-              </p>
+              </h2>
             </div>
-            <div className="mt-4 flex flex-wrap justify-center gap-6">
-              {winners.map((w) => (
-                <div key={w.candidateId} className="flex flex-col items-center gap-2">
-                  <div className="h-20 w-20 overflow-hidden rounded-full border-2 border-amber-300 bg-white">
+
+            <div className="relative mt-6 flex flex-wrap justify-center gap-4">
+              {winners.map((w, i) => (
+                <div
+                  key={w.candidateId}
+                  className="flex w-40 flex-col items-center gap-2 rounded-xl bg-white/70 px-4 py-5 shadow-sm ring-1 ring-amber-200/70"
+                >
+                  <div
+                    className="animate-winner-photo h-20 w-20 overflow-hidden rounded-full bg-white shadow-md ring-4 ring-amber-300 ring-offset-2 ring-offset-white/70"
+                    style={{ animationDelay: `${0.3 + i * 0.1}s` }}
+                  >
                     {w.photoUrl ? (
                       <img src={w.photoUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
@@ -70,10 +86,10 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  <p className="font-bold text-slate-900">
+                  <p className="text-center font-bold leading-tight text-slate-900">
                     {w.firstName} {w.lastName}
                   </p>
-                  {w.slogan && <p className="max-w-[10rem] text-xs italic text-slate-500">« {w.slogan} »</p>}
+                  {w.slogan && <p className="text-center text-xs italic leading-snug text-slate-500">« {w.slogan} »</p>}
                 </div>
               ))}
             </div>
