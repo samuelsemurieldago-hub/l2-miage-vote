@@ -391,6 +391,51 @@ $$;
 revoke all on function public.set_election_status(text) from public;
 grant execute on function public.set_election_status(text) to authenticated;
 
+-- Public winner announcement — callable by anyone (students included), but
+-- only ever reveals anything once voting is genuinely over (status closed,
+-- or the configured end_date has passed). Returns the candidate(s) tied for
+-- the most votes — NEVER the vote counts themselves, keeping the same
+-- "no raw numbers for students" rule as the rest of the app.
+create or replace function public.get_election_winners()
+returns table(candidate_id uuid, first_name text, last_name text, photo_url text, slogan text)
+language plpgsql
+stable
+security definer
+set search_path = public, extensions
+as $$
+declare
+  v_status text;
+  v_end_date timestamptz;
+  v_max_votes bigint;
+begin
+  select status, end_date into v_status, v_end_date from public.election_config where id = 1;
+
+  if v_status = 'open' and (v_end_date is null or v_end_date >= now()) then
+    return;
+  end if;
+
+  select count(*) into v_max_votes
+  from public.ballots
+  group by candidate_id
+  order by count(*) desc
+  limit 1;
+
+  if v_max_votes is null or v_max_votes = 0 then
+    return;
+  end if;
+
+  return query
+    select c.id, c.first_name, c.last_name, c.photo_url, c.slogan
+    from public.candidates c
+    where c.active = true
+      and (select count(*) from public.ballots b where b.candidate_id = c.id) = v_max_votes
+    order by c.order_index asc;
+end;
+$$;
+
+revoke all on function public.get_election_winners() from public;
+grant execute on function public.get_election_winners() to anon, authenticated;
+
 -- ----------------------------------------------------------------------------
 -- 6. REALTIME (live status badge / dashboard without manual refresh)
 -- ----------------------------------------------------------------------------
