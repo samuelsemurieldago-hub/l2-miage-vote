@@ -415,8 +415,8 @@ begin
   end if;
 
   select count(*) into v_max_votes
-  from public.ballots
-  group by candidate_id
+  from public.ballots b
+  group by b.candidate_id
   order by count(*) desc
   limit 1;
 
