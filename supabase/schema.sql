@@ -391,13 +391,24 @@ $$;
 revoke all on function public.set_election_status(text) from public;
 grant execute on function public.set_election_status(text) to authenticated;
 
--- Public winner announcement — callable by anyone (students included), but
--- only ever reveals anything once voting is genuinely over (status closed,
--- or the configured end_date has passed). Returns the candidate(s) tied for
--- the most votes — NEVER the vote counts themselves, keeping the same
+-- Public podium — callable by anyone (students included), but only ever
+-- reveals anything once voting is genuinely over (status closed, or the
+-- configured end_date has passed). Returns the top 3 candidates by votes
+-- with a `rank` (1/2/3, dense — ties share a rank) and a rounded
+-- `percentage` — NEVER the vote counts or the total, keeping the same
 -- "no raw numbers for students" rule as the rest of the app.
-create or replace function public.get_election_winners()
-returns table(candidate_id uuid, first_name text, last_name text, photo_url text, slogan text)
+drop function if exists public.get_election_winners();
+
+create or replace function public.get_election_podium()
+returns table(
+  candidate_id uuid,
+  first_name text,
+  last_name text,
+  photo_url text,
+  slogan text,
+  percentage numeric,
+  rank integer
+)
 language plpgsql
 stable
 security definer
@@ -406,7 +417,7 @@ as $$
 declare
   v_status text;
   v_end_date timestamptz;
-  v_max_votes bigint;
+  v_total numeric;
 begin
   select status, end_date into v_status, v_end_date from public.election_config where id = 1;
 
@@ -414,27 +425,38 @@ begin
     return;
   end if;
 
-  select count(*) into v_max_votes
-  from public.ballots b
-  group by b.candidate_id
-  order by count(*) desc
-  limit 1;
+  select count(*) into v_total from public.ballots;
 
-  if v_max_votes is null or v_max_votes = 0 then
+  if v_total is null or v_total = 0 then
     return;
   end if;
 
   return query
-    select c.id, c.first_name, c.last_name, c.photo_url, c.slogan
-    from public.candidates c
-    where c.active = true
-      and (select count(*) from public.ballots b where b.candidate_id = c.id) = v_max_votes
-    order by c.order_index asc;
+    select *
+    from (
+      select
+        c.id as candidate_id,
+        c.first_name,
+        c.last_name,
+        c.photo_url,
+        c.slogan,
+        round(coalesce(vc.votes, 0) / v_total * 100, 1) as percentage,
+        dense_rank() over (order by coalesce(vc.votes, 0) desc)::integer as rank
+      from public.candidates c
+      left join (
+        select b.candidate_id, count(*)::numeric as votes
+        from public.ballots b
+        group by b.candidate_id
+      ) vc on vc.candidate_id = c.id
+      where c.active = true
+    ) ranked
+    where ranked.rank <= 3
+    order by ranked.rank asc, ranked.first_name asc;
 end;
 $$;
 
-revoke all on function public.get_election_winners() from public;
-grant execute on function public.get_election_winners() to anon, authenticated;
+revoke all on function public.get_election_podium() from public;
+grant execute on function public.get_election_podium() to anon, authenticated;
 
 -- ----------------------------------------------------------------------------
 -- 6. REALTIME (live status badge / dashboard without manual refresh)

@@ -1,20 +1,22 @@
 import { supabase } from './supabase';
 
-export interface Winner {
+export interface PodiumEntry {
   candidateId: string;
   firstName: string;
   lastName: string;
   photoUrl: string | null;
   slogan: string;
+  percentage: number;
+  rank: number;
 }
 
 /**
- * Public winner announcement via the get_election_winners() RPC — returns
- * nothing while voting is still open, and never exposes vote counts, only
- * the identity of the candidate(s) tied for first place once it's over.
+ * Public podium via the get_election_podium() RPC — returns nothing while
+ * voting is still open, and only ever the top 3 by rank with a rounded
+ * percentage. Never the vote counts or the total.
  */
-export async function getElectionWinners(): Promise<Winner[]> {
-  const { data, error } = await supabase.rpc('get_election_winners');
+export async function getElectionPodium(): Promise<PodiumEntry[]> {
+  const { data, error } = await supabase.rpc('get_election_podium');
   if (error) throw error;
   return (
     data as {
@@ -23,6 +25,8 @@ export async function getElectionWinners(): Promise<Winner[]> {
       last_name: string;
       photo_url: string | null;
       slogan: string;
+      percentage: number;
+      rank: number;
     }[]
   ).map((row) => ({
     candidateId: row.candidate_id,
@@ -30,5 +34,7 @@ export async function getElectionWinners(): Promise<Winner[]> {
     lastName: row.last_name,
     photoUrl: row.photo_url,
     slogan: row.slogan,
+    percentage: row.percentage,
+    rank: row.rank,
   }));
 }

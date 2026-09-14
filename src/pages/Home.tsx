@@ -5,12 +5,36 @@ import { LogoPlaceholder } from '../components/LogoPlaceholder';
 import { StatusBadge } from '../components/StatusBadge';
 import { LoadingSpinner } from '../components/LoadingSpinner';
 import { subscribeElectionConfig, isElectionCurrentlyOpen } from '../lib/election';
-import { getElectionWinners, type Winner } from '../lib/winners';
+import { getElectionPodium, type PodiumEntry } from '../lib/podium';
 import type { ElectionConfig } from '../types';
+
+const RANK_STYLE: Record<number, { pedestal: string; gradient: string; ring: string; photo: string; order: string }> = {
+  1: {
+    pedestal: 'h-24 sm:h-36',
+    gradient: 'from-amber-400 to-amber-500',
+    ring: 'ring-amber-300',
+    photo: 'h-20 w-20 sm:h-28 sm:w-28',
+    order: 'order-2',
+  },
+  2: {
+    pedestal: 'h-16 sm:h-24',
+    gradient: 'from-slate-300 to-slate-400',
+    ring: 'ring-slate-300',
+    photo: 'h-16 w-16 sm:h-24 sm:w-24',
+    order: 'order-1',
+  },
+  3: {
+    pedestal: 'h-11 sm:h-16',
+    gradient: 'from-orange-300 to-orange-400',
+    ring: 'ring-orange-300',
+    photo: 'h-14 w-14 sm:h-20 sm:w-20',
+    order: 'order-3',
+  },
+};
 
 export default function Home() {
   const [config, setConfig] = useState<ElectionConfig | null>(null);
-  const [winners, setWinners] = useState<Winner[] | null>(null);
+  const [podium, setPodium] = useState<PodiumEntry[] | null>(null);
 
   useEffect(() => {
     const unsubscribe = subscribeElectionConfig(setConfig);
@@ -21,17 +45,17 @@ export default function Home() {
 
   useEffect(() => {
     if (config && !open) {
-      getElectionWinners()
-        .then(setWinners)
+      getElectionPodium()
+        .then(setPodium)
         .catch((err) => {
           console.error(err);
-          setWinners([]);
+          setPodium([]);
         });
     }
   }, [config, open]);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary-50 via-white to-slate-50 px-4 py-12">
+    <div className="flex min-h-screen flex-col items-center bg-gradient-to-b from-primary-50 via-white to-slate-50 px-4 py-12">
       <div className="w-full max-w-lg animate-fade-in text-center">
         <div className="flex justify-center">
           <LogoPlaceholder logoUrl={config?.logoUrl} size={88} />
@@ -49,53 +73,61 @@ export default function Home() {
         <div className="mt-8 flex justify-center">
           {config === null ? <LoadingSpinner /> : <StatusBadge open={open} size="lg" />}
         </div>
+      </div>
 
-        {winners && winners.length > 0 && (
-          <div className="animate-winner-card relative mt-8 overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 via-yellow-50 to-amber-50 p-6 shadow-sm shadow-amber-200/50 sm:p-8">
-            {/* Subtle celebratory sheen sweeping across the card */}
-            <div
-              aria-hidden="true"
-              className="animate-winner-sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-            />
+      {podium && podium.length > 0 && (
+        <div className="animate-winner-card relative mt-8 w-full max-w-2xl overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-b from-amber-50 via-yellow-50 to-amber-50 p-6 shadow-sm shadow-amber-200/50 sm:p-10">
+          <div
+            aria-hidden="true"
+            className="animate-winner-sheen pointer-events-none absolute inset-y-0 left-0 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+          />
 
-            <div className="relative flex flex-col items-center">
-              <div className="animate-winner-trophy flex h-12 w-12 items-center justify-center rounded-full bg-amber-400 text-white shadow-md shadow-amber-400/40">
-                <Trophy size={22} strokeWidth={2.25} />
-              </div>
-              <p className="mt-3 text-xs font-bold uppercase tracking-widest text-amber-700">Élection terminée</p>
-              <h2 className="mt-1 text-lg font-extrabold text-slate-900">
-                {winners.length > 1 ? 'Vainqueurs ex æquo' : 'Vainqueur'}
-              </h2>
+          <div className="relative flex flex-col items-center text-center">
+            <div className="animate-winner-trophy flex h-12 w-12 items-center justify-center rounded-full bg-amber-400 text-white shadow-md shadow-amber-400/40">
+              <Trophy size={22} strokeWidth={2.25} />
             </div>
+            <p className="mt-3 text-xs font-bold uppercase tracking-widest text-amber-700">Élection terminée</p>
+            <h2 className="mt-1 text-xl font-extrabold text-slate-900 sm:text-2xl">Podium final</h2>
+          </div>
 
-            <div className="relative mt-6 flex flex-wrap justify-center gap-4">
-              {winners.map((w, i) => (
-                <div
-                  key={w.candidateId}
-                  className="flex w-40 flex-col items-center gap-2 rounded-xl bg-white/70 px-4 py-5 shadow-sm ring-1 ring-amber-200/70"
-                >
+          <div className="relative mt-10 flex flex-wrap items-end justify-center gap-2 sm:gap-6">
+            {podium.map((p) => {
+              const style = RANK_STYLE[p.rank] ?? RANK_STYLE[3];
+              const stepDelay = (3 - p.rank) * 0.15;
+              return (
+                <div key={p.candidateId} className={`flex w-20 flex-col items-center sm:w-36 ${style.order}`}>
                   <div
-                    className="animate-winner-photo h-20 w-20 overflow-hidden rounded-full bg-white shadow-md ring-4 ring-amber-300 ring-offset-2 ring-offset-white/70"
-                    style={{ animationDelay: `${0.3 + i * 0.1}s` }}
+                    className={`animate-podium-photo overflow-hidden rounded-full bg-white shadow-md ring-4 ring-offset-2 ring-offset-amber-50 ${style.ring} ${style.photo}`}
+                    style={{ animationDelay: `${stepDelay + 0.2}s` }}
                   >
-                    {w.photoUrl ? (
-                      <img src={w.photoUrl} alt="" className="h-full w-full object-cover" />
+                    {p.photoUrl ? (
+                      <img src={p.photoUrl} alt="" className="h-full w-full object-cover" />
                     ) : (
-                      <div className="flex h-full w-full items-center justify-center text-amber-300">
-                        <User size={32} />
+                      <div className="flex h-full w-full items-center justify-center text-slate-300">
+                        <User size={28} />
                       </div>
                     )}
                   </div>
-                  <p className="text-center font-bold leading-tight text-slate-900">
-                    {w.firstName} {w.lastName}
-                  </p>
-                  {w.slogan && <p className="text-center text-xs italic leading-snug text-slate-500">« {w.slogan} »</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
+                  <p className="mt-3 text-center text-sm font-bold leading-tight text-slate-900 sm:text-base">
+                    {p.firstName} {p.lastName}
+                  </p>
+                  <p className="mt-1 text-lg font-extrabold text-amber-600 sm:text-xl">{p.percentage.toFixed(1)}%</p>
+
+                  <div
+                    className={`animate-podium-step mt-3 flex w-full items-start justify-center rounded-t-lg bg-gradient-to-b pt-2 text-lg font-extrabold text-white shadow-inner sm:text-xl ${style.gradient} ${style.pedestal}`}
+                    style={{ animationDelay: `${stepDelay}s` }}
+                  >
+                    {p.rank}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      <div className="w-full max-w-lg animate-fade-in text-center">
         <div className="mt-8">
           <Link
             to="/vote"
