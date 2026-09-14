@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { KeyRound, Download, RefreshCw, CircleCheck, CircleX, AlertTriangle, AlertCircle } from 'lucide-react';
+import { KeyRound, Download, RefreshCw, RotateCw, CircleCheck, CircleX, AlertTriangle, AlertCircle } from 'lucide-react';
 import { buildCodesCSV, generateAndStoreCodes, listCodes } from '../../lib/voterCodes';
 import { subscribeElectionConfig } from '../../lib/election';
 import { getErrorMessage } from '../../lib/errors';
@@ -14,11 +14,14 @@ export default function AdminCodes() {
   const [totalVoters, setTotalVoters] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function refresh() {
     setCodes(await listCodes());
+    setLastRefreshed(new Date());
   }
 
   useEffect(() => {
@@ -26,6 +29,19 @@ export default function AdminCodes() {
     const unsubscribe = subscribeElectionConfig((config) => setTotalVoters(config.totalVoters));
     return unsubscribe;
   }, []);
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    setError(null);
+    try {
+      await refresh();
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err, 'Impossible de rafraîchir la liste des codes.'));
+    } finally {
+      setRefreshing(false);
+    }
+  }
 
   async function handleGenerate() {
     if (!totalVoters) return;
@@ -72,7 +88,15 @@ export default function AdminCodes() {
             <strong>Paramètres → Nombre d'électeurs</strong>).
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            <RotateCw size={16} className={refreshing ? 'animate-spin' : ''} />
+            Actualiser
+          </button>
           <button
             onClick={handleExport}
             disabled={!codes || codes.length === 0}
@@ -91,6 +115,13 @@ export default function AdminCodes() {
           </button>
         </div>
       </div>
+
+      {lastRefreshed && (
+        <p className="mt-2 text-xs text-slate-400">
+          Dernière actualisation : {lastRefreshed.toLocaleTimeString('fr-FR')}
+          {' — '}pense à cliquer <strong>Actualiser</strong> avant de donner un code pour être sûr de son statut.
+        </p>
+      )}
 
       {successMsg && (
         <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
