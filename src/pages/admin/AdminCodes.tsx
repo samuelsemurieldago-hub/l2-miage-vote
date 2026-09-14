@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { KeyRound, Download, RefreshCw, RotateCw, CircleCheck, CircleX, AlertTriangle, AlertCircle } from 'lucide-react';
-import { buildCodesCSV, generateAndStoreCodes, listCodes } from '../../lib/voterCodes';
+import { buildCodesCSV, generateAndStoreCodes, listCodes, subscribeCodes } from '../../lib/voterCodes';
 import { subscribeElectionConfig } from '../../lib/election';
 import { getErrorMessage } from '../../lib/errors';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
@@ -25,9 +25,17 @@ export default function AdminCodes() {
   }
 
   useEffect(() => {
-    refresh();
-    const unsubscribe = subscribeElectionConfig((config) => setTotalVoters(config.totalVoters));
-    return unsubscribe;
+    // Live: a code's status flips to "Utilisé" here the instant a student
+    // votes, no manual refresh needed — see subscribeCodes in lib/voterCodes.
+    const unsubscribeCodes = subscribeCodes((list) => {
+      setCodes(list);
+      setLastRefreshed(new Date());
+    });
+    const unsubscribeConfig = subscribeElectionConfig((config) => setTotalVoters(config.totalVoters));
+    return () => {
+      unsubscribeCodes();
+      unsubscribeConfig();
+    };
   }, []);
 
   async function handleRefresh() {
@@ -118,8 +126,8 @@ export default function AdminCodes() {
 
       {lastRefreshed && (
         <p className="mt-2 text-xs text-slate-400">
-          Dernière actualisation : {lastRefreshed.toLocaleTimeString('fr-FR')}
-          {' — '}pense à cliquer <strong>Actualiser</strong> avant de donner un code pour être sûr de son statut.
+          Statuts en direct — mis à jour automatiquement dès qu'un étudiant vote. Dernière mise à jour :{' '}
+          {lastRefreshed.toLocaleTimeString('fr-FR')}.
         </p>
       )}
 

@@ -455,6 +455,17 @@ begin
   ) then
     alter publication supabase_realtime add table public.candidates;
   end if;
+
+  -- Safe to broadcast: Realtime enforces the table's RLS per subscriber, so
+  -- only a full admin's session (which passes voter_codes_select_admin,
+  -- i.e. is_admin()) ever receives these change events — a sous_admin or an
+  -- anonymous student gets nothing, exactly like a direct query would.
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'voter_codes'
+  ) then
+    alter publication supabase_realtime add table public.voter_codes;
+  end if;
 end $$;
 
 -- ----------------------------------------------------------------------------

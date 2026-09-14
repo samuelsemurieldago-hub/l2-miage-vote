@@ -37,6 +37,34 @@ export async function listCodes(): Promise<VoterCode[]> {
   return (data as VoterCodeRow[]).map(fromRow);
 }
 
+/**
+ * Fetches the current codes, then keeps `cb` in sync via Supabase Realtime —
+ * a status flips to USED the instant a student votes, with no manual
+ * refresh needed. Requires `voter_codes` in the `supabase_realtime`
+ * publication (see supabase/schema.sql); Realtime enforces the table's RLS
+ * per subscriber, so this only ever delivers anything to a full admin.
+ */
+export function subscribeCodes(cb: (codes: VoterCode[]) => void) {
+  let active = true;
+  listCodes().then((codes) => {
+    if (active) cb(codes);
+  });
+
+  const channel = supabase
+    .channel('voter_codes_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'voter_codes' }, () => {
+      listCodes().then((codes) => {
+        if (active) cb(codes);
+      });
+    })
+    .subscribe();
+
+  return () => {
+    active = false;
+    supabase.removeChannel(channel);
+  };
+}
+
 export function buildCodesCSV(codes: VoterCode[]): string {
   const header = 'N°,Code,Statut';
   const rows = codes.map((c, i) => {
